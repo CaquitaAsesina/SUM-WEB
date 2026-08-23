@@ -13,9 +13,8 @@
   <style>
     :root {
       --red: #E63946; --red-dark: #C1121F; --red-glow: rgba(230,57,70,0.3);
-      --bg: #FAFAFA; --card: #FFFFFF; --glass: rgba(255,255,255,0.7);
-      --border: rgba(0,0,0,0.08); --text: #1A1A1A; --text2: #555; --muted: #999;
-      --blur: blur(20px) saturate(180%);
+      --bg: #FAFAFA; --card: #FFFFFF; --border: rgba(0,0,0,0.08);
+      --text: #1A1A1A; --text2: #555; --muted: #999;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -48,7 +47,7 @@
     }
     .login-container { width:100%; max-width:420px; padding:24px; position:relative; z-index:10; }
     .login-card {
-      background: var(--card); backdrop-filter: var(--blur);
+      background: var(--card); backdrop-filter: blur(20px) saturate(180%);
       border: 1px solid var(--border); border-radius: 24px;
       box-shadow: 0 24px 80px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02);
       overflow: hidden; animation: cardIn 0.8s cubic-bezier(0.34,1.56,0.64,1);
@@ -168,4 +167,123 @@
     .login-footer {
       padding: 24px 32px 28px; text-align: center;
       border-top: 1px solid var(--border);
-      animation: fadeInUp 0.6s ease 0.8s backward
+      animation: fadeInUp 0.6s ease 0.8s backwards;
+    }
+    .role-chips { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .role-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; background: rgba(0,0,0,0.03);
+      border: 1px solid var(--border); border-radius: 10px;
+      font-size: 11px; color: var(--text2); font-weight: 600;
+      transition: all 0.2s;
+    }
+    .role-chip:hover { border-color: var(--red); color: var(--red); transform: translateY(-1px); }
+    .role-chip i { font-size: 14px; }
+    .watermark {
+      text-align: center; margin-top: 28px;
+      font-size: 12px; color: var(--muted);
+      letter-spacing: -0.01em; font-weight: 500;
+      animation: fadeInUp 0.6s ease 0.9s backwards;
+    }
+    @media (max-width: 480px) {
+      .login-container { padding: 16px; }
+      .login-header { padding: 32px 24px 28px; }
+      .login-body { padding: 28px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo"><i class="bi bi-hospital"></i></div>
+        <h1>Farmacias Peruanas</h1>
+        <p>Sistema de Suministros</p>
+      </div>
+      <div class="login-body">
+        <div class="error-alert" id="loginError">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span id="loginErrorText">Error</span>
+        </div>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label>Usuario</label>
+            <div class="input-wrapper">
+              <input type="text" id="loginUsuario" placeholder="Ingrese su usuario" required autocomplete="username" autofocus>
+              <i class="bi bi-person input-icon"></i>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Contraseña</label>
+            <div class="input-wrapper">
+              <input type="password" id="loginPassword" placeholder="Ingrese su contraseña" required autocomplete="current-password">
+              <i class="bi bi-lock input-icon"></i>
+              <button type="button" class="toggle-pass" onclick="togglePass()">
+                <i class="bi bi-eye" id="passIcon"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn-login" id="loginBtn">
+            <span class="btn-text"><i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión</span>
+            <div class="spinner"></div>
+          </button>
+        </form>
+      </div>
+      <div class="login-footer">
+        <div class="role-chips">
+          <div class="role-chip"><i class="bi bi-shield-fill-check" style="color:var(--red);"></i> Admin — control total</div>
+          <div class="role-chip"><i class="bi bi-eye-fill" style="color:var(--muted);"></i> Lectura — solo consulta</div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">© 2026 Farmacias Peruanas — Suministros</div>
+  </div>
+  <script>
+    if (localStorage.getItem('fp_token')) window.location.href = '/';
+    function togglePass() {
+      const inp = document.getElementById('loginPassword');
+      const icon = document.getElementById('passIcon');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    }
+    async function handleLogin(e) {
+      e.preventDefault();
+      const usuario = document.getElementById('loginUsuario').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+      const errDiv = document.getElementById('loginError');
+      const errText = document.getElementById('loginErrorText');
+      if (!usuario || !password) {
+        errDiv.classList.add('show');
+        errText.textContent = 'Ingrese usuario y contraseña.';
+        return;
+      }
+      btn.classList.add('loading'); btn.disabled = true; errDiv.classList.remove('show');
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuario, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('fp_token', data.data.token);
+          localStorage.setItem('fp_user', JSON.stringify(data.data.user));
+          window.location.href = '/';
+        } else {
+          errDiv.classList.add('show');
+          errText.textContent = data.message || 'Credenciales incorrectas';
+        }
+      } catch (err) {
+        errDiv.classList.add('show');
+        errText.textContent = 'Error de conexión con el servidor.';
+      } finally {
+        btn.classList.remove('loading'); btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
