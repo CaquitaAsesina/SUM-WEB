@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Environment variables (never commit real credentials)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local test / debug artifacts that may contain credentials
+token.txt
+login_test.json
+
+# Keys / certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Tool metadata
+.freebuff/
+
+# Build output
+dist/
+build/
+coverage/
