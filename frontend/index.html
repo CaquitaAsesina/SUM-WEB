@@ -17,6 +17,26 @@
 
 <body>
 
+  <!-- Page Load Overlay -->
+  <div id="pageLoader" style="position:fixed;inset:0;z-index:99999;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;">
+    <style>
+      @keyframes plIn{from{opacity:0;transform:scale(0.4) rotate(-20deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+      @keyframes plGlow{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.2);opacity:1}}
+      @keyframes plFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    </style>
+    <div style="position:relative;width:120px;height:120px;margin-bottom:36px;animation:plIn 0.6s cubic-bezier(0.34,1.56,0.64,1)">
+      <div style="position:absolute;inset:-20px;border-radius:50%;background:radial-gradient(circle,rgba(230,57,70,0.08) 0%,transparent 70%);animation:plGlow 2s ease-in-out infinite"></div>
+      <svg style="width:120px;height:120px;transform:rotate(-90deg)" viewBox="0 0 120 120">
+        <circle fill="none" stroke="rgba(230,57,70,0.08)" stroke-width="6" cx="60" cy="60" r="54"/>
+        <circle id="plRing" fill="none" stroke="#E63946" stroke-width="6" stroke-linecap="round" cx="60" cy="60" r="54" stroke-dasharray="339.292" stroke-dashoffset="339.292" style="filter:drop-shadow(0 0 6px rgba(230,57,70,0.3));transition:stroke-dashoffset 0.1s linear"/>
+      </svg>
+    </div>
+    <div style="font-size:42px;font-weight:900;color:#1A1A1A;letter-spacing:-0.04em;line-height:1;margin-bottom:6px;animation:plFade 0.5s ease 0.2s backwards"><span id="plPct">0</span><span style="font-size:22px;font-weight:600;color:#999;letter-spacing:0">%</span></div>
+    <div style="font-size:13px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;animation:plFade 0.5s ease 0.3s backwards">Cargando sistema</div>
+    <div style="width:200px;height:3px;border-radius:3px;background:rgba(0,0,0,0.05);overflow:hidden;animation:plFade 0.5s ease 0.4s backwards"><div id="plBar" style="height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#E63946,#C1121F);transition:width 0.12s linear"></div></div>
+    <div id="plStatus" style="font-size:12px;color:#999;margin-top:12px;font-weight:500;min-height:18px;animation:plFade 0.5s ease 0.5s backwards"></div>
+  </div>
+
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
   <!-- SIDEBAR -->
@@ -37,36 +57,16 @@
       </a>
 
       <div class="nav-section">Catálogos</div>
-      <a class="nav-item" data-page="productos" onclick="navigateTo('productos')">
-        <i class="bi bi-box-seam"></i> Productos
-      </a>
-      <a class="nav-item" data-page="areas" onclick="navigateTo('areas')">
-        <i class="bi bi-building"></i> Áreas
-      </a>
-      <a class="nav-item" data-page="asignaciones" onclick="navigateTo('asignaciones')">
-        <i class="bi bi-link-45deg"></i> Asignaciones
+      <a class="nav-item" data-page="nueva-tarea" onclick="navigateTo('nueva-tarea')">
+        <i class="bi bi-clipboard2-plus"></i> Nueva Tarea
       </a>
 
       <div class="nav-section">Operaciones</div>
-      <a class="nav-item" data-page="periodos" onclick="navigateTo('periodos')">
-        <i class="bi bi-calendar3"></i> Períodos
+      <a class="nav-item" data-page="nueva-operacion" onclick="navigateTo('nueva-operacion')">
+        <i class="bi bi-plus-circle"></i> Nuevo
       </a>
-      <a class="nav-item" data-page="picking" onclick="navigateTo('picking')">
-        <i class="bi bi-truck"></i> Picking
-      </a>
-      <a class="nav-item" data-page="auditorias" onclick="navigateTo('auditorias')">
-        <i class="bi bi-clipboard-check"></i> Auditorías
-      </a>
-      <a class="nav-item" data-page="movimientos" onclick="navigateTo('movimientos')">
-        <i class="bi bi-arrow-left-right"></i> Mov. Fuera Picking
-      </a>
-
-      <div class="nav-section">Trupal</div>
-      <a class="nav-item" data-page="trupal-productos" onclick="navigateTo('trupal-productos')">
-        <i class="bi bi-box-seam"></i> Prod. Trupal
-      </a>
-      <a class="nav-item" data-page="trupal" onclick="navigateTo('trupal')">
-        <i class="bi bi-box-arrow-in-right"></i> Trupal
+      <a class="nav-item" data-page="movimientos-trupal" onclick="navigateTo('movimientos-trupal')">
+        <i class="bi bi-box-arrow-in-right"></i> Movimientos
       </a>
 
       <div class="nav-section">Sistema</div>
@@ -255,624 +255,489 @@
       </div>
     </section>
 
-    <!-- ========== PRODUCTOS ========== -->
-    <section class="page-section" id="page-productos">
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-box-seam text-danger"></i> Productos</h4>
-          <p class="text-muted" style="font-size:14px;">Gestión del catálogo de productos</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportProductosExcel()"><i class="bi bi-file-earmark-excel"></i>
-            Excel</button>
-
-          <button class="btn-fp" onclick="openProductoModal()"><i class="bi bi-plus-lg"></i> Nuevo</button>
-        </div>
+    <!-- ========== NUEVA TAREA (Consolidado) ========== -->
+    <section class="page-section" id="page-nueva-tarea">
+      <div class="mb-4">
+        <h4 style="font-weight:700;"><i class="bi bi-clipboard2-plus text-danger"></i> Nueva Tarea</h4>
+        <p class="text-muted" style="font-size:14px;">Gestión consolidada de productos, áreas y asignaciones</p>
       </div>
 
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Nombre</label>
-          <input type="text" class="form-control" id="filterProductoNombre" placeholder="Buscar por nombre..."
-            oninput="loadProductos()">
-        </div>
-        <div class="filter-group">
-          <label>Código</label>
-          <input type="text" class="form-control" id="filterProductoCodigo" placeholder="Buscar por código..."
-            oninput="loadProductos()">
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearProductoFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
+      <!-- Tabs -->
+      <ul class="nav nav-tabs" id="ntTabs" style="border-bottom:2px solid var(--border-subtle,#e9ecef);margin-bottom:0;gap:4px;">
+        <li class="nav-item">
+          <button class="nav-link active" id="ntTabProductos" onclick="switchNtTab('productos')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-box-seam"></i> Productos
           </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="ntTabAreas" onclick="switchNtTab('areas')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-building"></i> Áreas
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="ntTabAsignaciones" onclick="switchNtTab('asignaciones')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-link-45deg"></i> Asignaciones
+          </button>
+        </li>
+      </ul>
+
+      <!-- ===== Tab: Productos ===== -->
+      <div class="nt-tab-content" id="ntContent-productos" style="border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-box-seam text-danger"></i> Productos</h5>
+            <p class="text-muted" style="font-size:13px;">Catálogo de productos del sistema</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportProductosExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" onclick="openProductoModal()"><i class="bi bi-plus-lg"></i> Nuevo</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Nombre</label>
+            <input type="text" class="form-control" id="filterProductoNombre" placeholder="Buscar por nombre..." oninput="loadProductos()">
+          </div>
+          <div class="filter-group">
+            <label>Código</label>
+            <input type="text" class="form-control" id="filterProductoCodigo" placeholder="Buscar por código..." oninput="loadProductos()">
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearProductoFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
+        </div>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Nombre</th><th>Código</th><th>Creado</th><th>Acciones</th></tr></thead>
+                <tbody id="productosTableBody"><tr><td colspan="5" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nombre</th>
-                  <th>Código</th>
-                  <th>Creado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="productosTableBody">
-                <tr>
-                  <td colspan="5" class="text-center py-4">
-                    <div class="loading-spinner"></div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- ===== Tab: Áreas ===== -->
+      <div class="nt-tab-content" id="ntContent-areas" style="display:none;border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-building text-danger"></i> Áreas de Trabajo</h5>
+            <p class="text-muted" style="font-size:13px;">Gestión de áreas de distribución</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportAreasExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" onclick="openAreaModal()"><i class="bi bi-plus-lg"></i> Nueva</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Nombre</label>
+            <input type="text" class="form-control" id="filterAreaNombre" placeholder="Buscar por nombre..." oninput="loadAreas()">
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearAreaFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
+        </div>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Nombre</th><th>Descripción</th><th>Creado</th><th>Acciones</th></tr></thead>
+                <tbody id="areasTableBody"><tr><td colspan="5" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tab: Asignaciones ===== -->
+      <div class="nt-tab-content" id="ntContent-asignaciones" style="display:none;border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-link-45deg text-danger"></i> Asignaciones Producto-Área</h5>
+            <p class="text-muted" style="font-size:13px;">Configuración base de cantidades asignadas por área</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportAsignacionesExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" onclick="openAsignacionModal()"><i class="bi bi-plus-lg"></i> Nueva</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Área</label>
+            <select class="form-select" id="filterAsignArea" onchange="loadAsignaciones()"><option value="">Todas</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Producto</label>
+            <select class="form-select" id="filterAsignProducto" onchange="loadAsignaciones()"><option value="">Todos</option></select>
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearAsignacionFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
+        </div>
+        <div class="accordion-fp accordion" id="asignacionesAccordion">
+          <div class="loading-spinner" id="asignacionesLoading"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== NUEVA OPERACIÓN (Consolidado) ========== -->
+    <section class="page-section" id="page-nueva-operacion">
+      <div id="noPeriodBanner" style="display:none;">
+        <div class="alert-fp-warning"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Debe crear un período activo</strong> antes de registrar operaciones. Ve a <a href="#" onclick="navigateTo('nueva-operacion')" style="color:var(--accent-red);font-weight:600;">Períodos</a> y crea uno nuevo.</div>
+      </div>
+      <div class="mb-4">
+        <h4 style="font-weight:700;"><i class="bi bi-plus-circle text-danger"></i> Nuevo</h4>
+        <p class="text-muted" style="font-size:14px;">Gestión consolidada de pickings, auditorías y movimientos</p>
+      </div>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs" id="noTabs" style="border-bottom:2px solid var(--border-subtle,#e9ecef);margin-bottom:0;gap:4px;">
+        <li class="nav-item">
+          <button class="nav-link active" id="noTabPeriodos" onclick="switchNoTab('periodos')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-calendar3"></i> Períodos
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="noTabPicking" onclick="switchNoTab('picking')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-truck"></i> Picking
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="noTabAuditorias" onclick="switchNoTab('auditorias')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-clipboard-check"></i> Auditorías
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="noTabMovimientos" onclick="switchNoTab('movimientos')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-arrow-left-right"></i> Movimientos
+          </button>
+        </li>
+      </ul>
+
+      <!-- ===== Tab: Períodos ===== -->
+      <div class="no-tab-content" id="noContent-periodos" style="border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-calendar3 text-danger"></i> Períodos</h5>
+            <p class="text-muted" style="font-size:13px;">Unidades de tiempo para agrupar operaciones</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportPeriodosExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" onclick="openPeriodoModal()"><i class="bi bi-plus-lg"></i> Nuevo</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Estado</label>
+            <select class="form-select" id="filterPeriodoEstado" onchange="loadPeriodos()">
+              <option value="">Todos</option>
+              <option value="activo">Activo</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Fecha Desde</label>
+            <input type="date" class="form-control" id="filterPeriodoDesde" onchange="loadPeriodos()">
+          </div>
+          <div class="filter-group">
+            <label>Fecha Hasta</label>
+            <input type="date" class="form-control" id="filterPeriodoHasta" onchange="loadPeriodos()">
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearPeriodoFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
+        </div>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Nombre</th><th>Estado</th><th>Cuadra</th><th>Fecha Creación</th><th>Fecha Cierre</th><th>Acciones</th></tr></thead>
+                <tbody id="periodosTableBody"><tr><td colspan="7" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tab: Picking ===== -->
+      <div class="no-tab-content" id="noContent-picking" style="display:none; style="border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-truck text-danger"></i> Picking Automático</h5>
+            <p class="text-muted" style="font-size:13px;">Registro de entrega diaria de productos a áreas</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportPickingExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" id="btnNuevoPicking" onclick="openPickingModal()" disabled><i class="bi bi-plus-lg"></i> Registrar</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Período</label>
+            <select class="form-select" id="filterPickingPeriodo" onchange="loadPicking()"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Área</label>
+            <select class="form-select" id="filterPickingArea" onchange="loadPicking()"><option value="">Todas</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Producto</label>
+            <select class="form-select" id="filterPickingProducto" onchange="loadPicking()"><option value="">Todos</option></select>
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearPickingFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
+        </div>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Período</th><th>Área</th><th>Producto</th><th>Cant. Calculada</th><th>Cant. Entregada</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody id="pickingTableBody"><tr><td colspan="8" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tab: Auditorías ===== -->
+      <div class="no-tab-content" id="noContent-auditorias" style="display:none;border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-clipboard-check text-danger"></i> Auditorías</h5>
+            <p class="text-muted" style="font-size:13px;">Control de inventario por área y producto</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportAuditoriasExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" id="btnNuevaAuditoria" onclick="openAuditoriaModal()" disabled><i class="bi bi-plus-lg"></i> Nueva</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Período</label>
+            <select class="form-select" id="filterAudPeriodo" onchange="loadAuditorias()"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Área</label>
+            <select class="form-select" id="filterAudArea" onchange="loadAuditorias()"><option value="">Todas</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Producto</label>
+            <select class="form-select" id="filterAudProducto" onchange="loadAuditorias()"><option value="">Todos</option></select>
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearAuditoriaFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
+        </div>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Período</th><th>Área</th><th>Producto</th><th>Cant. Encontrada</th><th>Fecha/Hora</th><th>Acciones</th></tr></thead>
+                <tbody id="auditoriasTableBody"><tr><td colspan="7" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tab: Movimientos ===== -->
+      <div class="no-tab-content" id="noContent-movimientos" style="display:none;border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-arrow-left-right text-danger"></i> Movimientos Fuera del Picking</h5>
+            <p class="text-muted" style="font-size:13px;">Entregas adicionales fuera del flujo normal</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportMovimientosExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" id="btnNuevoMovimiento" onclick="openMovimientoModal()" disabled><i class="bi bi-plus-lg"></i> Nuevo</button>
+          </div>
+        </div>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Período</label>
+            <select class="form-select" id="filterMovPeriodo" onchange="loadMovimientos()"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Área</label>
+            <select class="form-select" id="filterMovArea" onchange="loadMovimientos()"><option value="">Todas</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Producto</label>
+            <select class="form-select" id="filterMovProducto" onchange="loadMovimientos()"><option value="">Todos</option></select>
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearMovimientoFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
+        </div>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Período</th><th>Área</th><th>Producto</th><th>Cantidad</th><th>Motivo</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody id="movimientosTableBody"><tr><td colspan="8" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== ÁREAS ========== -->
-    <section class="page-section" id="page-areas">
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-building text-danger"></i> Áreas de Trabajo</h4>
-          <p class="text-muted" style="font-size:14px;">Gestión de áreas de distribución</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportAreasExcel()"><i class="bi bi-file-earmark-excel"></i>
-            Excel</button>
-
-          <button class="btn-fp" onclick="openAreaModal()"><i class="bi bi-plus-lg"></i> Nueva</button>
-        </div>
+    <!-- ========== MOVIMIENTOS (Consolidado) ========== -->
+    <section class="page-section" id="page-movimientos-trupal">
+      <div class="mb-4">
+        <h4 style="font-weight:700;"><i class="bi bi-arrow-left-right text-danger"></i> Movimientos</h4>
+        <p class="text-muted" style="font-size:14px;">Gestión de productos y entradas/salidas</p>
       </div>
 
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Nombre</label>
-          <input type="text" class="form-control" id="filterAreaNombre" placeholder="Buscar por nombre..."
-            oninput="loadAreas()">
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearAreaFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
+      <!-- Tabs -->
+      <ul class="nav nav-tabs" id="mtTabs" style="border-bottom:2px solid var(--border-subtle,#e9ecef);margin-bottom:0;gap:4px;">
+        <li class="nav-item">
+          <button class="nav-link active" id="mtTabProductos" onclick="switchMtTab('productos')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-box-seam"></i> Productos
           </button>
-        </div>
-      </div>
-
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Creado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="areasTableBody">
-                <tr>
-                  <td colspan="5" class="text-center py-4">
-                    <div class="loading-spinner"></div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== ASIGNACIONES ========== -->
-    <section class="page-section" id="page-asignaciones">
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-link-45deg text-danger"></i> Asignaciones Producto-Área</h4>
-          <p class="text-muted" style="font-size:14px;">Configuración base de cantidades asignadas por área</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportAsignacionesExcel()"><i class="bi bi-file-earmark-excel"></i>
-            Excel</button>
-
-          <button class="btn-fp" onclick="openAsignacionModal()"><i class="bi bi-plus-lg"></i> Nueva</button>
-        </div>
-      </div>
-
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Área</label>
-          <select class="form-select" id="filterAsignArea" onchange="loadAsignaciones()">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Producto</label>
-          <select class="form-select" id="filterAsignProducto" onchange="loadAsignaciones()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearAsignacionFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="mtTabTrupal" onclick="switchMtTab('trupal')" style="border:1px solid var(--border-subtle,#e9ecef);border-bottom:none;border-radius:10px 10px 0 0;font-weight:600;font-size:13px;padding:10px 20px;">
+            <i class="bi bi-arrow-left-right"></i> Movimientos
           </button>
-        </div>
-      </div>
+        </li>
+      </ul>
 
-      <!-- Accordion grouped by area -->
-      <div class="accordion-fp accordion" id="asignacionesAccordion">
-        <div class="loading-spinner" id="asignacionesLoading"></div>
-      </div>
-    </section>
-
-    <!-- ========== PERÍODOS ========== -->
-    <section class="page-section" id="page-periodos">
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-calendar3 text-danger"></i> Períodos</h4>
-          <p class="text-muted" style="font-size:14px;">Unidades de tiempo para agrupar operaciones</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportPeriodosExcel()"><i class="bi bi-file-earmark-excel"></i>
-            Excel</button>
-
-          <button class="btn-fp" onclick="openPeriodoModal()"><i class="bi bi-plus-lg"></i> Nuevo</button>
-        </div>
-      </div>
-
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Estado</label>
-          <select class="form-select" id="filterPeriodoEstado" onchange="loadPeriodos()">
-            <option value="">Todos</option>
-            <option value="activo">Activo</option>
-            <option value="cerrado">Cerrado</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Fecha Desde</label>
-          <input type="date" class="form-control" id="filterPeriodoDesde" onchange="loadPeriodos()">
-        </div>
-        <div class="filter-group">
-          <label>Fecha Hasta</label>
-          <input type="date" class="form-control" id="filterPeriodoHasta" onchange="loadPeriodos()">
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearPeriodoFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
-          </button>
-        </div>
-      </div>
-
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nombre</th>
-                  <th>Estado</th>
-                  <th>Cuadra</th>
-                  <th>Fecha Creación</th>
-                  <th>Fecha Cierre</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="periodosTableBody">
-                <tr>
-                  <td colspan="7" class="text-center py-4">
-                    <div class="loading-spinner"></div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- ===== Tab: Productos ===== -->
+      <div class="mt-tab-content" id="mtContent-productos" style="border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-box-seam text-danger"></i> Productos</h5>
+            <p class="text-muted" style="font-size:13px;">Catálogo de productos registrados</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportTrupalProductosExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" onclick="openTrupalProductoModal()"><i class="bi bi-plus-lg"></i> Nuevo</button>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- ========== PICKING ========== -->
-    <section class="page-section" id="page-picking">
-      <div id="pickingNoPeriodBanner" style="display:none;">
-        <div class="alert-fp-warning"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Debe crear un período activo</strong> antes de registrar pickings. Ve a <a href="#" onclick="navigateTo('periodos')" style="color:var(--accent-red);font-weight:600;">Períodos</a> y crea uno nuevo.</div>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-truck text-danger"></i> Picking Automático</h4>
-          <p class="text-muted" style="font-size:14px;">Registro de entrega diaria de productos a áreas</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportPickingExcel()"><i class="bi bi-file-earmark-excel"></i>
-            Excel</button>
-
-          <button class="btn-fp" id="btnNuevoPicking" onclick="openPickingModal()" disabled><i
-              class="bi bi-plus-lg"></i> Registrar</button>
-        </div>
-      </div>
-
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Período</label>
-          <select class="form-select" id="filterPickingPeriodo" onchange="loadPicking()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Área</label>
-          <select class="form-select" id="filterPickingArea" onchange="loadPicking()">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Producto</label>
-          <select class="form-select" id="filterPickingProducto" onchange="loadPicking()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearPickingFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
-          </button>
-        </div>
-      </div>
-
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Período</th>
-                  <th>Área</th>
-                  <th>Producto</th>
-                  <th>Cant. Calculada</th>
-                  <th>Cant. Entregada</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="pickingTableBody">
-                <tr>
-                  <td colspan="8" class="text-center py-4">
-                    <div class="loading-spinner"></div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Nombre</label>
+            <input type="text" class="form-control" id="filterTrupalProdNombre" placeholder="Buscar por nombre..." oninput="loadTrupalProductos()">
+          </div>
+          <div class="filter-group">
+            <label>Código</label>
+            <input type="text" class="form-control" id="filterTrupalProdCodigo" placeholder="Buscar por código..." oninput="loadTrupalProductos()">
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearTrupalProdFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- ========== AUDITORÍAS ========== -->
-    <section class="page-section" id="page-auditorias">
-      <div id="audNoPeriodBanner" style="display:none;">
-        <div class="alert-fp-warning"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Debe crear un período activo</strong> antes de registrar auditorías. Ve a <a href="#" onclick="navigateTo('periodos')" style="color:var(--accent-red);font-weight:600;">Períodos</a> y crea uno nuevo.</div>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-clipboard-check text-danger"></i> Auditorías</h4>
-          <p class="text-muted" style="font-size:14px;">Control de inventario por área y producto</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportAuditoriasExcel()"><i class="bi bi-file-earmark-excel"></i>
-            Excel</button>
-
-          <button class="btn-fp" id="btnNuevaAuditoria" onclick="openAuditoriaModal()" disabled><i
-              class="bi bi-plus-lg"></i> Nueva</button>
-        </div>
-      </div>
-
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Período</label>
-          <select class="form-select" id="filterAudPeriodo" onchange="loadAuditorias()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Área</label>
-          <select class="form-select" id="filterAudArea" onchange="loadAuditorias()">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Producto</label>
-          <select class="form-select" id="filterAudProducto" onchange="loadAuditorias()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearAuditoriaFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
-          </button>
-        </div>
-      </div>
-
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Período</th>
-                  <th>Área</th>
-                  <th>Producto</th>
-                  <th>Cant. Encontrada</th>
-                  <th>Fecha/Hora</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="auditoriasTableBody">
-                <tr>
-                  <td colspan="7" class="text-center py-4">
-                    <div class="loading-spinner"></div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== MOVIMIENTOS FUERA DEL PICKING ========== -->
-    <section class="page-section" id="page-movimientos">
-      <div id="movNoPeriodBanner" style="display:none;">
-        <div class="alert-fp-warning"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Debe crear un período activo</strong> antes de registrar movimientos fuera del picking. Ve a <a href="#" onclick="navigateTo('periodos')" style="color:var(--accent-red);font-weight:600;">Períodos</a> y crea uno nuevo.</div>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-arrow-left-right text-danger"></i> Movimientos Fuera del Picking
-          </h4>
-          <p class="text-muted" style="font-size:14px;">Entregas adicionales fuera del flujo normal</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportMovimientosExcel()"><i class="bi bi-file-earmark-excel"></i>
-            Excel</button>
-
-          <button class="btn-fp" id="btnNuevoMovimiento" onclick="openMovimientoModal()" disabled><i
-              class="bi bi-plus-lg"></i> Nuevo</button>
-        </div>
-      </div>
-
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Período</label>
-          <select class="form-select" id="filterMovPeriodo" onchange="loadMovimientos()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Área</label>
-          <select class="form-select" id="filterMovArea" onchange="loadMovimientos()">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>Producto</label>
-          <select class="form-select" id="filterMovProducto" onchange="loadMovimientos()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearMovimientoFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
-          </button>
-        </div>
-      </div>
-
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Período</th>
-                  <th>Área</th>
-                  <th>Producto</th>
-                  <th>Cantidad</th>
-                  <th>Motivo</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="movimientosTableBody">
-                <tr>
-                  <td colspan="8" class="text-center py-4">
-                    <div class="loading-spinner"></div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== TRUPAL PRODUCTOS ========== -->
-    <section class="page-section" id="page-trupal-productos">
-      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-box-seam text-danger"></i> Productos Trupal</h4>
-          <p class="text-muted" style="font-size:14px;">Catálogo de productos para el módulo Trupal</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportTrupalProductosExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-          <button class="btn-fp" onclick="openTrupalProductoModal()"><i class="bi bi-plus-lg"></i> Nuevo</button>
-        </div>
-      </div>
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Nombre</label>
-          <input type="text" class="form-control" id="filterTrupalProdNombre" placeholder="Buscar por nombre..." oninput="loadTrupalProductos()">
-        </div>
-        <div class="filter-group">
-          <label>Código</label>
-          <input type="text" class="form-control" id="filterTrupalProdCodigo" placeholder="Buscar por código..." oninput="loadTrupalProductos()">
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearTrupalProdFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
-        </div>
-      </div>
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nombre</th>
-                  <th>Código</th>
-                  <th>Creado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="trupalProductosTableBody">
-                <tr><td colspan="5" class="text-center py-4"><div class="loading-spinner"></div></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== TRUPAL ========== -->
-    <section class="page-section" id="page-trupal">
-      <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-          <h4 style="font-weight:700;"><i class="bi bi-box-arrow-in-right text-danger"></i> Trupal</h4>
-          <p class="text-muted" style="font-size:14px;">Control de entradas y devoluciones de productos</p>
-        </div>
-        <div class="module-header-actions">
-          <button class="btn-export" onclick="exportTrupalExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-          <button class="btn-fp" onclick="openTrupalModal()"><i class="bi bi-plus-lg"></i> Nuevo Registro</button>
-        </div>
-      </div>
-
-      <!-- Global Totals -->
-      <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6">
-          <div class="stat-card border-green">
-            <div class="stat-icon green"><i class="bi bi-box-arrow-in-down"></i></div>
-            <div class="stat-value" id="trupalTotalEntradas">0</div>
-            <div class="stat-label">Total Entradas</div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="stat-card border-red">
-            <div class="stat-icon red"><i class="bi bi-box-arrow-up"></i></div>
-            <div class="stat-value" id="trupalTotalDevoluciones">0</div>
-            <div class="stat-label">Total Devoluciones</div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="stat-card border-black">
-            <div class="stat-icon black"><i class="bi bi-calculator"></i></div>
-            <div class="stat-value" id="trupalBalance">0</div>
-            <div class="stat-label">Balance Total</div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="stat-card">
-            <div class="stat-icon gray"><i class="bi bi-list-count"></i></div>
-            <div class="stat-value" id="trupalRegistros">0</div>
-            <div class="stat-label">Registros Totales</div>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Nombre</th><th>Código</th><th>Creado</th><th>Acciones</th></tr></thead>
+                <tbody id="trupalProductosTableBody"><tr><td colspan="5" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Per-product breakdown -->
-      <div class="card-fp mb-4" id="trupalBalanceProductCard">
-        <div class="card-header-fp">
-          <h5><i class="bi bi-bar-chart-line"></i> Resumen por Producto</h5>
-        </div>
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Código</th>
-                  <th style="color:var(--accent-green)">Entradas</th>
-                  <th style="color:var(--accent-red)">Devoluciones</th>
-                  <th>Saldo</th>
-                </tr>
-              </thead>
-              <tbody id="trupalBalanceProductTable">
-                <tr><td colspan="5" class="text-center py-3" style="color:var(--text-muted)">Sin datos</td></tr>
-              </tbody>
-            </table>
+      <!-- ===== Tab: Movimientos ===== -->
+      <div class="mt-tab-content" id="mtContent-trupal" style="display:none;border:1px solid var(--border-subtle,#e9ecef);border-radius:0 10px 10px 10px;padding:20px;background:var(--card-bg,#fff);">
+        <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5 style="font-weight:700;"><i class="bi bi-arrow-left-right text-danger"></i> Movimientos</h5>
+            <p class="text-muted" style="font-size:13px;">Control de entradas y devoluciones de productos</p>
+          </div>
+          <div class="module-header-actions">
+            <button class="btn-export" onclick="exportTrupalExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-fp" onclick="openTrupalModal()"><i class="bi bi-plus-lg"></i> Nuevo Registro</button>
           </div>
         </div>
-      </div>
-
-      <!-- Filters -->
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label>Tipo</label>
-          <select class="form-select" id="filterTrupalTipo" onchange="loadTrupal()">
-            <option value="">Todos</option>
-            <option value="entrada">Entradas</option>
-            <option value="devolucion">Devoluciones</option>
-          </select>
+        <!-- Global Totals -->
+        <div class="row g-3 mb-4">
+          <div class="col-xl-3 col-md-6">
+            <div class="stat-card border-green">
+              <div class="stat-icon green"><i class="bi bi-box-arrow-in-down"></i></div>
+              <div class="stat-value" id="trupalTotalEntradas">0</div>
+              <div class="stat-label">Total Entradas</div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-md-6">
+            <div class="stat-card border-red">
+              <div class="stat-icon red"><i class="bi bi-box-arrow-up"></i></div>
+              <div class="stat-value" id="trupalTotalDevoluciones">0</div>
+              <div class="stat-label">Total Devoluciones</div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-md-6">
+            <div class="stat-card border-black">
+              <div class="stat-icon black"><i class="bi bi-calculator"></i></div>
+              <div class="stat-value" id="trupalBalance">0</div>
+              <div class="stat-label">Balance Total</div>
+            </div>
+          </div>
+          <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+              <div class="stat-icon gray"><i class="bi bi-list-count"></i></div>
+              <div class="stat-value" id="trupalRegistros">0</div>
+              <div class="stat-label">Registros Totales</div>
+            </div>
+          </div>
         </div>
-        <div class="filter-group">
-          <label>Producto</label>
-          <select class="form-select" id="filterTrupalProducto" onchange="loadTrupal()">
-            <option value="">Todos</option>
-          </select>
+        <!-- Per-product breakdown -->
+        <div class="card-fp mb-4" id="trupalBalanceProductCard">
+          <div class="card-header-fp">
+            <h5><i class="bi bi-bar-chart-line"></i> Resumen por Producto</h5>
+          </div>
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>Producto</th><th>Código</th><th style="color:var(--accent-green)">Entradas</th><th style="color:var(--accent-red)">Devoluciones</th><th>Saldo</th></tr></thead>
+                <tbody id="trupalBalanceProductTable"><tr><td colspan="5" class="text-center py-3" style="color:var(--text-muted)">Sin datos</td></tr></tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div class="filter-group">
-          <label>Placa</label>
-          <input type="text" class="form-control" id="filterTrupalPlaca" placeholder="Buscar placa..." oninput="loadTrupal()">
+        <!-- Filters -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>Tipo</label>
+            <select class="form-select" id="filterTrupalTipo" onchange="loadTrupal()">
+              <option value="">Todos</option>
+              <option value="entrada">Entradas</option>
+              <option value="devolucion">Devoluciones</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Producto</label>
+            <select class="form-select" id="filterTrupalProducto" onchange="loadTrupal()"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Placa</label>
+            <input type="text" class="form-control" id="filterTrupalPlaca" placeholder="Buscar placa..." oninput="loadTrupal()">
+          </div>
+          <div class="filter-group">
+            <label>Desde</label>
+            <input type="date" class="form-control" id="filterTrupalDesde" onchange="loadTrupal()">
+          </div>
+          <div class="filter-group">
+            <label>Hasta</label>
+            <input type="date" class="form-control" id="filterTrupalHasta" onchange="loadTrupal()">
+          </div>
+          <div>
+            <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearTrupalFilters()"><i class="bi bi-x-lg"></i> Limpiar</button>
+          </div>
         </div>
-        <div class="filter-group">
-          <label>Desde</label>
-          <input type="date" class="form-control" id="filterTrupalDesde" onchange="loadTrupal()">
-        </div>
-        <div class="filter-group">
-          <label>Hasta</label>
-          <input type="date" class="form-control" id="filterTrupalHasta" onchange="loadTrupal()">
-        </div>
-        <div>
-          <button class="btn-fp btn-fp-outline btn-fp-sm" onclick="clearTrupalFilters()">
-            <i class="bi bi-x-lg"></i> Limpiar
-          </button>
-        </div>
-      </div>
-
-      <div class="card-fp">
-        <div class="card-body-fp p-0">
-          <div class="table-responsive">
-            <table class="table-fp">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Tipo</th>
-                  <th>Producto</th>
-                  <th>Placa</th>
-                  <th>Cantidad</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="trupalTableBody">
-                <tr>
-                  <td colspan="7" class="text-center py-4">
-                    <div class="loading-spinner"></div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="card-fp">
+          <div class="card-body-fp p-0">
+            <div class="table-responsive">
+              <table class="table-fp">
+                <thead><tr><th>#</th><th>Tipo</th><th>Producto</th><th>N° Guía</th><th>Placa</th><th>Cantidad</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody id="trupalTableBody"><tr><td colspan="8" class="text-center py-4"><div class="loading-spinner"></div></td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -1224,7 +1089,7 @@
     </div>
   </div>
 
-  <!-- Modal: Trupal -->
+  <!-- Modal: Movimiento -->
   <div class="modal fade modal-fp" id="trupalModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1249,9 +1114,15 @@
                 <option value="">Seleccionar producto...</option>
               </select>
             </div>
-            <div class="mb-3" id="trupalPlacaGroup">
-              <label class="form-label">Placa del Camión * <span style="font-size:11px;color:var(--text-muted);">(obligatoria en entradas)</span></label>
-              <input type="text" class="form-control" id="trupalPlaca" maxlength="20" placeholder="Ej: ABC-123">
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">N° Guía</label>
+                <input type="text" class="form-control" id="trupalNumGuia" maxlength="50" placeholder="Ej: GUIA-001">
+              </div>
+              <div class="col-md-6" id="trupalPlacaGroup">
+                <label class="form-label">Placa del Camión * <span style="font-size:11px;color:var(--text-muted);">(obligatoria en entradas)</span></label>
+                <input type="text" class="form-control" id="trupalPlaca" maxlength="20" placeholder="Ej: ABC-123">
+              </div>
             </div>
             <div class="mb-3">
               <label class="form-label">Cantidad *</label>
@@ -1273,7 +1144,7 @@
     </div>
   </div>
 
-  <!-- Modal: Trupal Producto -->
+  <!-- Modal: Producto Movimiento -->
   <div class="modal fade modal-fp" id="trupalProductoModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1381,6 +1252,57 @@
       const saved = localStorage.getItem('fp_theme') || 'dark';
       setTheme(saved);
     }
+  </script>
+  <script>
+    // ====== PAGE LOADER ANIMATION ======
+    (function(){
+      const circumference = 2 * Math.PI * 54;
+      const steps = [
+        { target: 20, text: 'Conectando con el servidor...' },
+        { target: 45, text: 'Cargando módulos...' },
+        { target: 70, text: 'Preparando interfaz...' },
+        { target: 90, text: 'Verificando sesión...' },
+        { target: 100, text: '¡Listo!' }
+      ];
+      let pct = 0, stepIdx = 0;
+      const iv = setInterval(() => {
+        if (stepIdx >= steps.length) {
+          clearInterval(iv);
+          return;
+        }
+        const s = steps[stepIdx];
+        if (pct < s.target) pct = Math.min(pct + 1, s.target);
+        const p = document.getElementById('plPct');
+        const r = document.getElementById('plRing');
+        const b = document.getElementById('plBar');
+        const st = document.getElementById('plStatus');
+        if (p) p.textContent = pct;
+        if (r) r.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+        if (b) b.style.width = pct + '%';
+        if (pct === s.target && s.text && st) st.textContent = s.text;
+        if (pct >= s.target) stepIdx++;
+      }, 50);
+
+      window.hidePageLoader = function() {
+        clearInterval(iv);
+        const loader = document.getElementById('pageLoader');
+        if (!loader) return;
+        // Jump to 100% if not there
+        const p = document.getElementById('plPct');
+        const r = document.getElementById('plRing');
+        const b = document.getElementById('plBar');
+        const st = document.getElementById('plStatus');
+        if (p) p.textContent = '100';
+        if (r) r.style.strokeDashoffset = '0';
+        if (b) b.style.width = '100%';
+        if (st) st.textContent = '¡Listo!';
+        setTimeout(() => {
+          loader.style.transition = 'opacity 0.5s ease';
+          loader.style.opacity = '0';
+          setTimeout(() => { loader.remove(); }, 500);
+        }, 300);
+      };
+    })();
   </script>
   <script src="/js/export.js"></script>
   <script src="/js/app.js"></script>

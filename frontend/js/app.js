@@ -42,6 +42,8 @@ async function init() {
   updatePeriodIndicator();
   applyRoleRestrictions();
   navigateTo('dashboard');
+  // Hide page loader after everything is loaded
+  if (window.hidePageLoader) window.hidePageLoader();
 }
 
 // ====== ROLE-BASED UI ======
@@ -121,12 +123,12 @@ async function updatePeriodIndicator() {
       dot.className = 'status-dot';
       text.textContent = activePeriod.nombre;
       ['btnNuevoPicking','btnNuevaAuditoria','btnNuevoMovimiento'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = false; });
-      ['pickingNoPeriodBanner','audNoPeriodBanner','movNoPeriodBanner'].forEach(id => { const b = document.getElementById(id); if (b) b.style.display = 'none'; });
+      const nb = document.getElementById('noPeriodBanner'); if (nb) nb.style.display = 'none';
     } else {
       dot.className = 'status-dot inactive';
       text.textContent = 'Sin período activo';
       ['btnNuevoPicking','btnNuevaAuditoria','btnNuevoMovimiento'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = true; });
-      ['pickingNoPeriodBanner','audNoPeriodBanner','movNoPeriodBanner'].forEach(id => { const b = document.getElementById(id); if (b) b.style.display = 'block'; });
+      const nb = document.getElementById('noPeriodBanner'); if (nb) nb.style.display = 'block';
     }
   } catch (e) { console.error(e); }
 }
@@ -136,25 +138,50 @@ function navigateTo(page) {
   currentPage = page;
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(i => i.classList.toggle('active', i.dataset.page === page));
   document.querySelectorAll('.page-section').forEach(s => s.classList.toggle('active', s.id === `page-${page}`));
-  const titles = { dashboard:'Dashboard', 'trupal-productos':'Productos Trupal', productos:'Productos', areas:'Áreas de Trabajo', asignaciones:'Asignaciones Producto-Área', periodos:'Períodos', picking:'Picking Automático', auditorias:'Auditorías', movimientos:'Movimientos Fuera del Picking', trupal:'Trupal', usuarios:'Gestión de Usuarios', perfil:'Mi Perfil' };
+  const titles = { dashboard:'Dashboard', 'nueva-tarea':'Nueva Tarea', 'nueva-operacion':'Nuevo', 'movimientos-trupal':'Movimientos', usuarios:'Gestión de Usuarios', perfil:'Mi Perfil' };
   document.getElementById('pageTitle').textContent = titles[page] || 'Dashboard';
   if (window.innerWidth <= 991) toggleSidebar(false);
   loadPageData(page);
+}
+
+// ====== NUEVA TAREA - TAB SWITCHER ======
+function switchNtTab(tab) {
+  document.querySelectorAll('#ntTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('ntTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  document.querySelectorAll('.nt-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById('ntContent-' + tab).style.display = 'block';
+  if (tab === 'productos') loadProductos();
+  else if (tab === 'areas') loadAreas();
+  else if (tab === 'asignaciones') loadAsignaciones();
+}
+
+function switchNoTab(tab) {
+  document.querySelectorAll('#noTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('noTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  document.querySelectorAll('.no-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById('noContent-' + tab).style.display = 'block';
+  if (tab === 'periodos') loadPeriodos();
+  else if (tab === 'picking') loadPicking();
+  else if (tab === 'auditorias') loadAuditorias();
+  else if (tab === 'movimientos') loadMovimientos();
+}
+
+function switchMtTab(tab) {
+  document.querySelectorAll('#mtTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('mtTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  document.querySelectorAll('.mt-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById('mtContent-' + tab).style.display = 'block';
+  if (tab === 'productos') loadTrupalProductos();
+  else if (tab === 'trupal') loadTrupal();
 }
 
 async function loadPageData(page) {
   await updatePeriodIndicator();
   switch (page) {
     case 'dashboard': loadDashboard(); break;
-    case 'productos': loadProductos(); break;
-    case 'areas': loadAreas(); break;
-    case 'asignaciones': loadAsignaciones(); break;
-    case 'periodos': loadPeriodos(); break;
-    case 'picking': loadPicking(); break;
-    case 'auditorias': loadAuditorias(); break;
-    case 'movimientos': loadMovimientos(); break;
-    case 'trupal-productos': loadTrupalProductos(); break;
-    case 'trupal': loadTrupal(); break;
+    case 'nueva-tarea': loadProductos(); break;
+    case 'nueva-operacion': loadPeriodos(); break;
+    case 'movimientos-trupal': loadTrupalProductos(); break;
     case 'usuarios': loadUsuarios(); break;
     case 'perfil': loadPerfil(); break;
   }
@@ -542,12 +569,15 @@ async function loadTrupalBalance() {
 function renderTrupalTable() {
   const tbody = document.getElementById('trupalTableBody');
   if(!trupalData.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="empty-state"><p>No hay registros</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="empty-state"><p>No hay registros</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = trupalData.map((t, i) => {
     const tipoBadge = t.tipo==='entrada' ? '<i class="bi bi-box-arrow-in-down"></i> Entrada' : '<i class="bi bi-box-arrow-up"></i> Devolución';
+    const fullNombre = t.producto_nombre||'';
+    const nombreCorto = fullNombre.length > 18 ? fullNombre.substring(0, 18) + '...' : fullNombre;
     const placaHtml = t.placa ? '<code style="background:var(--bg-glass);padding:2px 8px;border-radius:4px;font-size:12px;">'+escapeHtml(t.placa)+'</code>' : '<span style="color:var(--text-muted)">—</span>';
+    const guiaHtml = t.num_guia ? '<code style="background:var(--bg-glass);padding:2px 8px;border-radius:4px;font-size:12px;">'+escapeHtml(t.num_guia)+'</code>' : '<span style="color:var(--text-muted)">—</span>';
     const cantColor = t.tipo==='entrada' ? 'var(--accent-green)' : 'var(--accent-red)';
     const cantSign = t.tipo==='entrada' ? '+' : '-';
     let act = '';
@@ -557,7 +587,8 @@ function renderTrupalTable() {
     return `<tr>
       <td>${i+1}</td>
       <td><span class="badge ${t.tipo==='entrada'?'badge-activo':'badge-cerrado'}" style="font-size:11px;">${tipoBadge}</span></td>
-      <td><strong>${escapeHtml(t.producto_nombre||'')}</strong></td>
+      <td><span class="tooltip-name" data-tip="${escapeHtml(fullNombre)}"><strong>${escapeHtml(nombreCorto)}</strong></span></td>
+      <td>${guiaHtml}</td>
       <td>${placaHtml}</td>
       <td><strong style="color:${cantColor}">${cantSign}${t.cantidad}</strong></td>
       <td style="font-size:12px;color:var(--text-secondary);">${formatDate(t.fecha)}</td>
@@ -577,6 +608,7 @@ function openTrupalModal(data = null) {
     document.getElementById('trupalId').value = data.id;
     document.getElementById('trupalTipo').value = data.tipo;
     document.getElementById('trupalProducto').value = data.producto_id;
+    document.getElementById('trupalNumGuia').value = data.num_guia || '';
     document.getElementById('trupalPlaca').value = data.placa || '';
     document.getElementById('trupalCantidad').value = data.cantidad;
     document.getElementById('trupalFecha').value = data.fecha ? data.fecha.split('T')[0] : getTodayLocal();
@@ -611,6 +643,7 @@ async function saveTrupal() {
   const id = document.getElementById('trupalId').value;
   const tipo = document.getElementById('trupalTipo').value;
   const producto_id = parseInt(document.getElementById('trupalProducto').value);
+  const num_guia = document.getElementById('trupalNumGuia').value.trim();
   const placa = document.getElementById('trupalPlaca').value.trim();
   const cantidad = parseInt(document.getElementById('trupalCantidad').value);
   const fecha = document.getElementById('trupalFecha').value;
@@ -622,7 +655,7 @@ async function saveTrupal() {
   if(!validateRequired(fecha, 'Fecha')) return;
 
   try {
-    const body = { tipo, producto_id, placa: placa || null, cantidad, fecha };
+    const body = { tipo, producto_id, num_guia: num_guia || null, placa: placa || null, cantidad, fecha };
     const r = id ? await api.put('/trupal/' + id, body) : await api.post('/trupal', body);
     if(r?.success) {
       showToast(r.message, 'success');

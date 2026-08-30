@@ -291,7 +291,7 @@ async function exportTrupalProductosExcel() {
     const res = await api.get('/trupal-productos');
     if (!res?.data?.length) { showToast('No hay datos', 'warning'); return; }
     ExportUtil.toExcel(res.data.map(p => ({ 'Nombre': p.nombre, 'Código': p.codigo || '-', 'Creado': p.created_at })),
-      `FP_Trupal_Productos_${new Date().toISOString().slice(0,10)}`, 'Productos Trupal');
+      `FP_Productos_${new Date().toISOString().slice(0,10)}`, 'Productos');
   } catch (e) { showToast('Error', 'danger'); }
 }
 
@@ -300,13 +300,14 @@ async function exportTrupalExcel() {
   try {
     const res = await api.get('/trupal');
     const data = res?.data || [];
-    if (!data.length) { showToast('No hay datos de Trupal para exportar', 'warning'); return; }
+    if (!data.length) { showToast('No hay datos para exportar', 'warning'); return; }
 
     const mainData = data.map((t, i) => ({
       '#': i + 1,
       'Tipo': t.tipo === 'entrada' ? 'ENTRADA' : 'DEVOLUCION',
       'Producto': t.producto_nombre || '-',
       'Código': t.producto_codigo || '-',
+      'N° Guía': t.num_guia || '-',
       'Placa': t.placa || '-',
       'Cantidad': t.tipo === 'entrada' ? t.cantidad : -t.cantidad,
       'Fecha': t.fecha ? new Date(t.fecha).toLocaleDateString('es-PE') : '-'
@@ -330,8 +331,8 @@ async function exportTrupalExcel() {
     const sheets = [{ data: mainData, name: 'Registros' }];
     if (summaryData.length) sheets.push({ data: summaryData, name: 'Resumen' });
     if (perProduct.length) sheets.push({ data: perProduct, name: 'Balance por Producto' });
-    ExportUtil.toMultiSheetExcel(sheets, `FP_Trupal_${new Date().toISOString().slice(0,10)}`);
-  } catch (e) { showToast('Error al exportar Trupal', 'danger'); }
+    ExportUtil.toMultiSheetExcel(sheets, `FP_Movimientos_${new Date().toISOString().slice(0,10)}`);
+  } catch (e) { showToast('Error al exportar', 'danger'); }
 }
 
 async function exportUsuariosExcel() {

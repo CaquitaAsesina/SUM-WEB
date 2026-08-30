@@ -41,11 +41,63 @@ function isLoggedIn() {
 }
 
 function logout() {
-  localStorage.removeItem('fp_token');
-  localStorage.removeItem('fp_user');
-  // Clear any cached data
-  if (window.caches) caches.keys().then(names => names.forEach(name => caches.delete(name)));
-  window.location.href = '/login.html';
+  // Show loading overlay before redirect
+  const existing = document.getElementById('loadingOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'loadingOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.4s ease;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;';
+  overlay.innerHTML = `
+    <div style="position:relative;width:120px;height:120px;margin-bottom:36px;animation:ldIn 0.6s cubic-bezier(0.34,1.56,0.64,1)">
+      <div style="position:absolute;inset:-20px;border-radius:50%;background:radial-gradient(circle,rgba(230,57,70,0.08) 0%,transparent 70%);animation:glP 2s ease-in-out infinite"></div>
+      <svg style="width:120px;height:120px;transform:rotate(-90deg)" viewBox="0 0 120 120">
+        <circle fill="none" stroke="rgba(230,57,70,0.08)" stroke-width="6" cx="60" cy="60" r="54"/>
+        <circle id="ldRing" fill="none" stroke="#E63946" stroke-width="6" stroke-linecap="round" cx="60" cy="60" r="54" stroke-dasharray="339.292" stroke-dashoffset="339.292" style="filter:drop-shadow(0 0 6px rgba(230,57,70,0.3));transition:stroke-dashoffset 0.1s linear"/>
+      </svg>
+    </div>
+    <div style="font-size:42px;font-weight:900;color:#1A1A1A;letter-spacing:-0.04em;line-height:1;margin-bottom:6px;animation:fiU 0.5s ease 0.2s backwards"><span id="ldPct">0</span><span style="font-size:22px;font-weight:600;color:#999;letter-spacing:0">%</span></div>
+    <div style="font-size:13px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;animation:fiU 0.5s ease 0.3s backwards">Cerrando sesión</div>
+    <div style="width:200px;height:3px;border-radius:3px;background:rgba(0,0,0,0.05);overflow:hidden;animation:fiU 0.5s ease 0.4s backwards"><div id="ldBar" style="height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#E63946,#C1121F);transition:width 0.12s linear"></div></div>
+    <div id="ldStatus" style="font-size:12px;color:#999;margin-top:12px;font-weight:500;min-height:18px;animation:fiU 0.5s ease 0.5s backwards"></div>
+    <style>@keyframes ldIn{from{opacity:0;transform:scale(0.4) rotate(-20deg)}to{opacity:1;transform:scale(1) rotate(0)}}@keyframes glP{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.2);opacity:1}}@keyframes fiU{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}</style>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+
+  const circumference = 2 * Math.PI * 54;
+  const steps = [
+    { target: 30, text: 'Guardando sesión...' },
+    { target: 60, text: 'Limpiando datos...' },
+    { target: 85, text: 'Preparando cierre...' },
+    { target: 100, text: '¡Hasta pronto!' }
+  ];
+  let pct = 0, stepIdx = 0;
+  const interval = setInterval(() => {
+    if (stepIdx >= steps.length) {
+      clearInterval(interval);
+      localStorage.removeItem('fp_token');
+      localStorage.removeItem('fp_user');
+      if (window.caches) caches.keys().then(names => names.forEach(name => caches.delete(name)));
+      setTimeout(() => {
+        overlay.style.transition = 'opacity 0.45s ease';
+        overlay.style.opacity = '0';
+        setTimeout(() => { window.location.href = '/login.html'; }, 450);
+      }, 400);
+      return;
+    }
+    const s = steps[stepIdx];
+    if (pct < s.target) pct = Math.min(pct + 1, s.target);
+    const pctEl = document.getElementById('ldPct');
+    const ring = document.getElementById('ldRing');
+    const bar = document.getElementById('ldBar');
+    const status = document.getElementById('ldStatus');
+    if (pctEl) pctEl.textContent = pct;
+    if (ring) ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+    if (bar) bar.style.width = pct + '%';
+    if (pct === s.target && s.text && status) status.textContent = s.text;
+    if (pct >= s.target) stepIdx++;
+  }, 45);
 }
 
 function checkAuth() {

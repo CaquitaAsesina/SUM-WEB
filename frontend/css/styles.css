@@ -158,6 +158,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Sego
 .table-fp .actions-cell .btn:hover{transform:translateY(-2px) scale(1.05)}
 .table-fp .actions-cell .btn-edit{background:var(--accent-green-dim);color:var(--accent-green)}.table-fp .actions-cell .btn-edit:hover{background:var(--accent-green);color:white;box-shadow:0 4px 12px rgba(45,106,79,0.3)}
 .table-fp .actions-cell .btn-delete{background:var(--accent-red-dim);color:var(--accent-red)}.table-fp .actions-cell .btn-delete:hover{background:var(--accent-red);color:white;box-shadow:var(--shadow-red)}
+.tooltip-name{position:relative;cursor:default}
+.tooltip-name::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) scale(0.9);background:#111;color:#fff;padding:5px 10px;border-radius:4px;font-size:10px;font-weight:500;white-space:nowrap;pointer-events:none;opacity:0;transition:all 0.15s ease;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:9999;letter-spacing:0.3px}
+.tooltip-name::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#111;opacity:0;transition:opacity 0.15s ease;z-index:9999}
+.tooltip-name:hover::after{opacity:1;transform:translateX(-50%) scale(1)}
+.tooltip-name:hover::before{opacity:1}
 
 .form-fp .form-label{font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;letter-spacing:-0.01em}
 .form-fp .form-control,.form-fp .form-select{background:var(--bg-glass);border:1.5px solid var(--border-medium);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--text-primary);transition:var(--transition)}
